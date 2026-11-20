@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Session manager",
+    "description": "Lists every workspace's sessions in a table and moves them to a trash area, with restore and permanent delete.",
+    "detail": "docs/DETAIL.md"
+  }
+}

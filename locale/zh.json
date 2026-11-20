@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "会话管理",
+    "description": "以表格按工作区分组列出会话，支持移入回收站、还原和彻底删除。",
+    "detail": "docs/DETAIL.md"
+  }
+}
