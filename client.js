@@ -24,12 +24,14 @@ window.__ModuleLoader__.load({
         'action.delete': '删除',
         'action.deleteCount': '删除 ({count})',
         'action.detail': '详情',
+        'action.archive': '归档',
+        'action.unarchive': '激活',
         'action.close': '关闭',
         'action.restore': '还原',
         'action.restoreCount': '还原 ({count})',
         'action.purge': '彻底删除',
         'action.confirm': '确认',
-        'action.confirmPurge': '确认彻底删除',
+        'action.confirmPurge': '确认',
         'action.cancel': '取消',
         'action.retry': '重试',
         'column.id': '会话 ID',
@@ -49,6 +51,15 @@ window.__ModuleLoader__.load({
         'status.archived': '归档',
         'workspace.unknown': '未知工作区',
         'workspace.noPath': '（无目录路径）',
+        'filter.status': '状态',
+        'filter.active': '激活',
+        'filter.archived': '归档',
+        'filter.clear': '清空条件',
+        'search.placeholder': '搜索会话标题',
+        'aria.searchTitle': '搜索会话标题',
+        'aria.clearTitle': '清除标题搜索',
+        'aria.clearFilters': '清空搜索和状态筛选',
+        'empty.filtered': '没有匹配的会话',
         'empty.sessions': '会话列表是空的',
         'empty.trash': '回收站是空的',
         loading: '正在加载…',
@@ -61,7 +72,7 @@ window.__ModuleLoader__.load({
         'error.title': '操作失败',
         'error.load': '无法读取会话数据。',
         'error.request': '请求失败。',
-        'error.sessionActive': '该会话仍有正在运行的任务，请先停止后再删除。',
+        'error.sessionActive': '该会话仍有正在运行的任务，请先停止后再操作。',
         'error.trashExists': '回收站中已存在同 ID 的会话。',
         'error.sessionNotFound': '找不到该会话的存储文件。',
         'error.sessionExists': '会话存储中已存在同 ID 的会话。',
@@ -82,6 +93,8 @@ window.__ModuleLoader__.load({
         'notice.bulkDeleted': '已将会话移入回收站，共 {count} 个。',
         'notice.bulkRestored': '已还原 {count} 个会话。',
         'notice.bulkPurged': '已彻底删除 {count} 个会话。',
+        'notice.archived': '会话已归档。',
+        'notice.unarchived': '会话已取消归档。',
         'error.bulkPartial': '成功 {ok} 个，失败 {failed} 个：{message}',
         'aria.back': '返回会话列表',
       },
@@ -95,13 +108,15 @@ window.__ModuleLoader__.load({
         'action.back': 'Back to sessions',
         'action.delete': 'Delete',
         'action.deleteCount': 'Delete ({count})',
-        'action.detail': 'Details',
+        'action.detail': 'Info',
+        'action.archive': 'Archive',
+        'action.unarchive': 'Activate',
         'action.close': 'Close',
         'action.restore': 'Restore',
         'action.restoreCount': 'Restore ({count})',
         'action.purge': 'Purge',
         'action.confirm': 'Confirm',
-        'action.confirmPurge': 'Confirm purge',
+        'action.confirmPurge': 'Confirm',
         'action.cancel': 'Cancel',
         'action.retry': 'Retry',
         'column.id': 'Session ID',
@@ -121,6 +136,15 @@ window.__ModuleLoader__.load({
         'status.archived': 'Archived',
         'workspace.unknown': 'Unknown workspace',
         'workspace.noPath': '(no directory path)',
+        'filter.status': 'Status',
+        'filter.active': 'Active',
+        'filter.archived': 'Archived',
+        'filter.clear': 'Clear filters',
+        'search.placeholder': 'Search session titles',
+        'aria.searchTitle': 'Search session titles',
+        'aria.clearTitle': 'Clear title search',
+        'aria.clearFilters': 'Clear title and status filters',
+        'empty.filtered': 'No matching sessions',
         'empty.sessions': 'The session list is empty',
         'empty.trash': 'The trash is empty',
         loading: 'Loading…',
@@ -133,7 +157,7 @@ window.__ModuleLoader__.load({
         'error.title': 'Operation failed',
         'error.load': 'Could not read session data.',
         'error.request': 'The request failed.',
-        'error.sessionActive': 'This session still has running work. Stop it before deleting the session.',
+        'error.sessionActive': 'This session still has running work. Stop it before changing it.',
         'error.trashExists': 'A trash entry with this session id already exists.',
         'error.sessionNotFound': 'The session storage file was not found.',
         'error.sessionExists': 'A session with this id already exists in storage.',
@@ -154,6 +178,8 @@ window.__ModuleLoader__.load({
         'notice.bulkDeleted': 'Moved {count} sessions to the trash.',
         'notice.bulkRestored': 'Restored {count} sessions.',
         'notice.bulkPurged': 'Permanently deleted {count} sessions.',
+        'notice.archived': 'Session archived.',
+        'notice.unarchived': 'Session unarchived.',
         'error.bulkPartial': '{ok} succeeded, {failed} failed: {message}',
         'aria.back': 'Back to the session list',
       },
@@ -161,6 +187,7 @@ window.__ModuleLoader__.load({
 
     const ERROR_KEYS = {
       'session-active': 'error.sessionActive',
+      'workspace/session-active': 'error.sessionActive',
       'trash-exists': 'error.trashExists',
       'session-not-found': 'error.sessionNotFound',
       'session-exists': 'error.sessionExists',
@@ -260,6 +287,78 @@ window.__ModuleLoader__.load({
   color: var(--dsw-alias-label-secondary);
 }
 .sm-alert-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.sm-filters {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 16px auto 0;
+}
+.sm-search {
+  position: relative;
+  display: flex;
+  flex: 0 1 360px;
+  align-items: center;
+  min-width: 220px;
+}
+.sm-search-icon {
+  position: absolute;
+  left: 9px;
+  display: inline-flex;
+  color: var(--dsw-alias-label-tertiary);
+  pointer-events: none;
+}
+.sm-search-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 30px;
+  padding: 0 30px 0 30px;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: 7px;
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 13px;
+}
+.sm-search-input::placeholder { color: var(--dsw-alias-label-tertiary); }
+.sm-search-input:focus {
+  outline: none;
+  border-color: var(--dsw-alias-brand-primary);
+  box-shadow: inset 0 0 0 0.5px var(--dsw-alias-brand-primary);
+}
+.sm-search-clear {
+  position: absolute;
+  right: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.sm-search-clear:hover { background: var(--dsw-alias-bg-layer-3); color: var(--dsw-alias-label-primary); }
+.sm-status-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+}
+.sm-filter-label { color: var(--dsw-alias-label-tertiary); }
+.sm-filter-option { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.sm-radio { width: 14px; height: 14px; margin: 0; accent-color: var(--dsw-alias-brand-primary); cursor: pointer; }
 .sm-table-toolbar {
   display: flex;
   flex: none;
@@ -267,7 +366,7 @@ window.__ModuleLoader__.load({
   gap: 8px;
   width: 100%;
   max-width: 1200px;
-  margin: 16px auto 0;
+  margin: 8px auto 0;
 }
 .sm-body {
   display: flex;
@@ -288,7 +387,7 @@ window.__ModuleLoader__.load({
 .sm-table {
   flex: none;
   width: 100%;
-  min-width: 1400px;
+  min-width: 1280px;
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
@@ -345,6 +444,30 @@ window.__ModuleLoader__.load({
   box-shadow: inset 3px 0 0 var(--dsw-alias-brand-primary);
 }
 .sm-group + .sm-row td { border-top: 0; }
+.sm-group-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sm-group-toggle:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 2px; border-radius: 4px; }
+.sm-group-chevron {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--dsw-alias-label-secondary);
+  transition: transform 120ms ease;
+}
+.sm-group-chevron--collapsed { transform: rotate(-90deg); }
+.sm-group-text { min-width: 0; flex: 1; }
 .sm-group-name { color: var(--dsw-alias-label-primary); font-size: 14px; font-weight: 600; line-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sm-group-path {
   margin-top: 1px;
@@ -362,26 +485,6 @@ window.__ModuleLoader__.load({
 .sm-path { color: var(--dsw-alias-label-secondary); }
 .sm-nowrap { white-space: nowrap; color: var(--dsw-alias-label-secondary); }
 .sm-time { white-space: nowrap; color: var(--dsw-alias-label-secondary); font-size: 11.5px; font-variant-numeric: tabular-nums; }
-.sm-table td.sm-workspace-cell { padding-top: 0; padding-bottom: 0; }
-.sm-workspace-detail {
-  display: flex;
-  flex-direction: column;
-  height: var(--sm-row-height);
-  overflow-x: hidden;
-  overflow-y: auto;
-  line-height: 20px;
-  text-align: left;
-}
-.sm-workspace-detail--short { justify-content: center; }
-.sm-workspace-line {
-  flex: 0 0 20px;
-  height: 20px;
-  line-height: 20px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: left;
-}
 .sm-detail-lines { display: flex; flex-direction: column; gap: 2px; }
 .sm-detail-line { white-space: pre-wrap; overflow-wrap: anywhere; }
 .sm-size { color: var(--dsw-alias-label-secondary); font-size: 11.5px; font-variant-numeric: tabular-nums; }
@@ -399,13 +502,13 @@ window.__ModuleLoader__.load({
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 4px;
+  gap: 2px;
   overflow: visible;
   background: var(--dsw-alias-bg-layer-1);
   box-shadow: -0.5px 0 0 var(--dsw-alias-border-l1);
 }
 .sm-table th.sm-actions-head { box-shadow: -0.5px 0 0 var(--dsw-alias-border-l1); }
-.sm-actions .sm-btn { height: 26px; padding: 0 8px; }
+.sm-actions .sm-btn { height: 24px; padding: 0 4px; gap: 0; font-size: 11px; }
 .sm-status {
   display: inline-flex;
   align-items: center;
@@ -443,7 +546,7 @@ window.__ModuleLoader__.load({
 .sm-state svg { opacity: 0.7; }
 .sm-spinner { width: 16px; height: 16px; border: 2px solid var(--dsw-alias-border-l2); border-top-color: var(--dsw-alias-brand-primary); border-radius: 999px; animation: sm-spin 800ms linear infinite; }
 @keyframes sm-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .sm-spinner { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .sm-spinner { animation: none; } .sm-group-chevron { transition: none; } }
 .sm-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -533,6 +636,20 @@ window.__ModuleLoader__.load({
 .sm-row--selected:hover td {
   background: color-mix(in srgb, var(--dsw-alias-label-primary) 8%, var(--dsw-alias-bg-layer-1));
 }
+.sm-table th.sm-actions-head {
+  background: color-mix(in srgb, var(--dsw-alias-brand-primary) 14%, var(--dsw-alias-bg-layer-2));
+}
+.sm-row td.sm-actions {
+  background: color-mix(in srgb, var(--dsw-alias-brand-primary) 10%, var(--dsw-alias-bg-layer-1));
+}
+.sm-row:hover td.sm-actions {
+  background: color-mix(in srgb, var(--dsw-alias-brand-primary) 13%, var(--dsw-alias-bg-layer-1));
+}
+.sm-btn--success,
+.sm-btn--success:hover:not(:disabled) {
+  color: var(--dsw-alias-state-success-primary);
+  border-color: var(--dsw-alias-state-success-primary);
+}
 @media (max-width: 700px) {
   .sm-page { padding-top: calc(20px + var(--dsh-frame-top-clearance, 0px)); padding-inline: 20px; }
   .sm-title { font-size: 18px; }
@@ -560,6 +677,37 @@ window.__ModuleLoader__.load({
       return h('svg', { viewBox: '0 0 48 48', width: 40, height: 40, 'aria-hidden': true, focusable: 'false' },
         h('path', { d: 'M9 28.5 13 12h22l4 16.5v7a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2v-7Z', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinejoin: 'round' }),
         h('path', { d: 'M9 28.5h9l2 4h8l2-4h9', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinejoin: 'round' }))
+    }
+
+    function groupChevronIcon() {
+      return h('svg', {
+        viewBox: '0 0 16 16',
+        width: 14,
+        height: 14,
+        'aria-hidden': true,
+        focusable: 'false',
+        style: { display: 'block' },
+      }, h('path', {
+        d: 'M4 6l4 4 4-4',
+        fill: 'none',
+        stroke: 'currentColor',
+        strokeWidth: 1.5,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      }))
+    }
+
+    function searchIcon() {
+      return h('svg', {
+        viewBox: '0 0 16 16',
+        width: 14,
+        height: 14,
+        'aria-hidden': true,
+        focusable: 'false',
+        style: { display: 'block' },
+      },
+      h('circle', { cx: 7, cy: 7, r: 4.2, fill: 'none', stroke: 'currentColor', strokeWidth: 1.4 }),
+      h('path', { d: 'M10.2 10.2 13.5 13.5', fill: 'none', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round' }))
     }
 
     function panelIcon(size, active) {
@@ -648,19 +796,32 @@ window.__ModuleLoader__.load({
       const [trashData, setTrashData] = React.useState({ groups: [], total: 0 })
       const [loading, setLoading] = React.useState(true)
       const [busyId, setBusyId] = React.useState(null)
+      const [busyAction, setBusyAction] = React.useState(null)
       const [error, setError] = React.useState(null)
       const [notice, setNotice] = React.useState(null)
       const [confirmPurgeId, setConfirmPurgeId] = React.useState(null)
+      const COLLAPSED_STORAGE_KEY = 'session-manager.collapsed-groups.v1'
+      const [collapsedGroups, setCollapsedGroups] = React.useState(() => {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(COLLAPSED_STORAGE_KEY) || '[]')
+          return new Set(Array.isArray(parsed) ? parsed.filter(key => typeof key === 'string') : [])
+        } catch {
+          return new Set()
+        }
+      })
       const [selectedIds, setSelectedIds] = React.useState(() => new Set())
       const [bulkBusy, setBulkBusy] = React.useState(false)
       const [purgeOpen, setPurgeOpen] = React.useState(false)
       const [purgeText, setPurgeText] = React.useState('')
       const [purgeTargets, setPurgeTargets] = React.useState([])
       const [detail, setDetail] = React.useState(null)
+      const [titleQuery, setTitleQuery] = React.useState('')
+      const [statusFilter, setStatusFilter] = React.useState(null)
 
       const describeError = React.useCallback((failure) => {
         const translate = tRef.current
-        const key = failure?.code ? ERROR_KEYS[failure.code] : undefined
+        const code = failure?.code ?? failure?.rpcError?.code
+        const key = code ? ERROR_KEYS[code] : undefined
         if (key) return translate(key)
         return translate('error.fallback', { message: failure instanceof Error ? failure.message : String(failure) })
       }, [])
@@ -708,6 +869,14 @@ window.__ModuleLoader__.load({
         return () => { window.removeEventListener('keydown', onKey) }
       }, [detail])
 
+      React.useEffect(() => {
+        try {
+          localStorage.setItem(COLLAPSED_STORAGE_KEY, JSON.stringify([...collapsedGroups]))
+        } catch {
+          // Storage may be unavailable; collapse state still works in memory.
+        }
+      }, [collapsedGroups])
+
       async function refreshSidebarWorkspace(workspaceId) {
         if (!workspaceId) return
         try {
@@ -733,6 +902,7 @@ window.__ModuleLoader__.load({
 
       async function mutate(id, route, success) {
         setBusyId(id)
+        setBusyAction(route)
         setError(null)
         setNotice(null)
         try {
@@ -755,6 +925,32 @@ window.__ModuleLoader__.load({
           setError(describeError(failure))
         } finally {
           setBusyId(null)
+          setBusyAction(null)
+        }
+      }
+
+      async function toggleArchive(session) {
+        const id = session.id
+        const action = session.archived ? 'unarchive' : 'archive'
+        setBusyId(id)
+        setBusyAction(action)
+        setError(null)
+        setNotice(null)
+        try {
+          if (session.archived) {
+            await ctx.workspaces.unarchiveSession(id)
+            setNotice(t('notice.unarchived'))
+          } else {
+            await ctx.workspaces.archiveSession(id)
+            setNotice(t('notice.archived'))
+          }
+          await refreshWorkspace()
+          await load()
+        } catch (failure) {
+          setError(describeError(failure))
+        } finally {
+          setBusyId(null)
+          setBusyAction(null)
         }
       }
 
@@ -857,39 +1053,75 @@ window.__ModuleLoader__.load({
         setNotice(null)
         setConfirmPurgeId(null)
         setSelectedIds(new Set())
+        setTitleQuery('')
+        setStatusFilter(null)
         setPurgeOpen(false)
         setPurgeText('')
         setPurgeTargets([])
         void load()
       }
 
-      const total = view === 'trash' ? trashData.total : sessionData.total
-      const groups = view === 'trash' ? trashData.groups : sessionData.groups
-      const visibleSessions = groups.flatMap(group => Array.isArray(group.sessions) ? group.sessions : [])
+      const allGroups = view === 'trash' ? trashData.groups : sessionData.groups
+      const normalizedQuery = titleQuery.trim().toLocaleLowerCase()
+      const groups = allGroups.map(group => {
+        const sessions = (Array.isArray(group.sessions) ? group.sessions : []).filter(session => {
+          if (statusFilter === 'active' && session.archived) return false
+          if (statusFilter === 'archived' && !session.archived) return false
+          if (normalizedQuery !== '') {
+            const title = (session.title || t('untitled')).toLocaleLowerCase()
+            if (!title.includes(normalizedQuery)) return false
+          }
+          return true
+        })
+        return { ...group, sessions }
+      }).filter(group => group.sessions.length > 0)
+      const filteredTotal = groups.reduce((sum, group) => sum + group.sessions.length, 0)
+      const hasFilters = normalizedQuery !== '' || statusFilter !== null
+      const emptyText = hasFilters
+        ? t('empty.filtered')
+        : t(view === 'trash' ? 'empty.trash' : 'empty.sessions')
+      const suggestionTitles = [...new Set(
+        allGroups.flatMap(group => (Array.isArray(group.sessions) ? group.sessions : []))
+          .filter(session => statusFilter === null || (statusFilter === 'archived') === session.archived)
+          .map(session => session.title)
+          .filter(title => typeof title === 'string' && title !== ''),
+      )].sort((left, right) => left.localeCompare(right)).slice(0, 100)
+
+      function groupKeyOf(group) {
+        return `${view}:${group.workspaceId || 'unknown'}:${group.path || group.title || ''}`
+      }
+
+      function toggleGroup(key) {
+        setCollapsedGroups(previous => {
+          const next = new Set(previous)
+          if (next.has(key)) next.delete(key)
+          else next.add(key)
+          return next
+        })
+      }
+
+      const visibleGroups = groups.filter(group => !collapsedGroups.has(groupKeyOf(group)))
+      const visibleSessions = visibleGroups.flatMap(group => Array.isArray(group.sessions) ? group.sessions : [])
       const visibleIds = new Set(visibleSessions.map(session => session.id))
       const selectedVisibleIds = [...selectedIds].filter(id => visibleIds.has(id))
       const selectedCount = selectedVisibleIds.length
 
-      function groupHeader(group, key) {
+      function groupHeader(group, key, collapsed) {
         return h('tr', { className: 'sm-group', key },
-          h('td', { colSpan: view === 'trash' ? 9 : 8 },
-            h('div', { className: 'sm-group-name', title: group.title || '' }, group.title || t('workspace.unknown')),
-            h('div', { className: 'sm-group-path', title: group.path || '' }, group.path || t('workspace.noPath'))))
-      }
-
-      function workspaceDetailCell(session) {
-        const entries = Array.isArray(session.workspaceEntries) ? session.workspaceEntries : []
-        return h('td', { className: 'sm-cell sm-workspace-cell' },
-          h('div', {
-            className: `sm-workspace-detail${entries.length <= 3 ? ' sm-workspace-detail--short' : ''}`,
-          },
-            entries.length === 0
-              ? h('div', { className: 'sm-workspace-line' }, '—')
-              : entries.map((entry, index) => h('div', {
-                className: 'sm-workspace-line',
-                key: `${entry}:${index}`,
-                title: entry,
-              }, entry))))
+          h('td', { colSpan: view === 'trash' ? 8 : 7 },
+            h('button', {
+              type: 'button',
+              className: 'sm-group-toggle',
+              'aria-expanded': !collapsed,
+              onClick: () => { toggleGroup(key) },
+            },
+            h('span', {
+              className: `sm-group-chevron${collapsed ? ' sm-group-chevron--collapsed' : ''}`,
+              'aria-hidden': true,
+            }, groupChevronIcon()),
+            h('span', { className: 'sm-group-text' },
+              h('div', { className: 'sm-group-name', title: group.title || '' }, group.title || t('workspace.unknown')),
+              h('div', { className: 'sm-group-path', title: group.path || '' }, group.path || t('workspace.noPath'))))))
       }
 
       function sessionRow(session, group) {
@@ -922,7 +1154,6 @@ window.__ModuleLoader__.load({
           h('td', { className: 'sm-cell sm-time' }, formatTime(session.createdAt)),
           h('td', { className: 'sm-cell sm-size' }, formatBytes(session.sizeBytes)),
           h('td', { className: 'sm-cell sm-mono sm-path', title: session.path || '' }, session.path || '—'),
-          workspaceDetailCell(session),
           h('td', { className: 'sm-cell sm-actions' },
             h('button', {
               type: 'button',
@@ -933,11 +1164,24 @@ window.__ModuleLoader__.load({
             }, t('action.detail')),
             h('button', {
               type: 'button',
+              className: `sm-btn${session.archived ? ' sm-btn--success' : ''}`,
+              disabled,
+              title: session.archived ? t('action.unarchive') : t('action.archive'),
+              'aria-label': session.archived ? t('action.unarchive') : t('action.archive'),
+              onClick: () => { void toggleArchive(session) },
+            }, busy && (busyAction === 'archive' || busyAction === 'unarchive')
+              ? h('span', { className: 'sm-spinner', 'aria-hidden': true })
+              : (session.archived ? t('action.unarchive') : t('action.archive'))),
+            h('button', {
+              type: 'button',
               className: 'sm-btn sm-btn--danger',
               disabled,
               title: t('action.delete'),
+              'aria-label': t('action.delete'),
               onClick: () => { void mutate(session.id, 'trash', () => t('notice.deleted')) },
-            }, busy ? h('span', { className: 'sm-spinner', 'aria-hidden': true }) : null, t('action.delete'))))
+            }, busy && busyAction === 'trash'
+              ? h('span', { className: 'sm-spinner', 'aria-hidden': true })
+              : t('action.delete'))))
       }
 
       function trashRow(session, group) {
@@ -972,7 +1216,6 @@ window.__ModuleLoader__.load({
           h('td', { className: 'sm-cell sm-time' }, formatTime(session.deletedAt)),
           h('td', { className: 'sm-cell sm-size' }, formatBytes(session.sizeBytes)),
           h('td', { className: 'sm-cell sm-mono sm-path', title: session.originalPath || '' }, session.originalPath || '—'),
-          workspaceDetailCell(session),
           h('td', { className: 'sm-cell sm-actions' },
             confirming ? null : h('button', {
               type: 'button',
@@ -986,12 +1229,15 @@ window.__ModuleLoader__.load({
               className: 'sm-btn sm-btn--primary',
               disabled,
               title: t('action.restore'),
+              'aria-label': t('action.restore'),
               onClick: () => {
                 void mutate(session.id, 'restore', result => result.rehomed
                   ? t('notice.rehomed', { workspace: result.targetTitle || t('workspace.unknown') })
                   : t('notice.restored'))
               },
-            }, busy ? h('span', { className: 'sm-spinner', 'aria-hidden': true }) : null, t('action.restore')),
+            }, busy && busyAction === 'restore'
+              ? h('span', { className: 'sm-spinner', 'aria-hidden': true })
+              : t('action.restore')),
             confirming
               ? h(React.Fragment, null,
                 h('button', {
@@ -1017,11 +1263,12 @@ window.__ModuleLoader__.load({
       }
 
       const rows = groups.flatMap((group) => {
-        const key = `${group.workspaceId || 'unknown'}:${group.path || group.title || ''}`
+        const key = groupKeyOf(group)
+        const collapsed = collapsedGroups.has(key)
         const sessions = Array.isArray(group.sessions) ? group.sessions : []
         return [
-          groupHeader(group, `${key}:head`),
-          ...sessions.map(session => view === 'trash' ? trashRow(session, group) : sessionRow(session, group)),
+          groupHeader(group, key, collapsed),
+          ...(collapsed ? [] : sessions.map(session => view === 'trash' ? trashRow(session, group) : sessionRow(session, group))),
         ]
       })
 
@@ -1029,19 +1276,18 @@ window.__ModuleLoader__.load({
       const body = loading && sessionData.total === 0 && trashData.total === 0
         ? h('div', { className: 'sm-state', role: 'status' }, h('span', { className: 'sm-spinner', 'aria-hidden': true }), h('div', null, t('loading')))
         : empty
-          ? h('div', { className: 'sm-state' }, emptyIcon(), h('div', null, t(view === 'trash' ? 'empty.trash' : 'empty.sessions')))
+          ? h('div', { className: 'sm-state' }, emptyIcon(), h('div', null, emptyText))
           : h('table', { className: 'sm-table' },
             h('caption', null, t(view === 'trash' ? 'table.trashCaption' : 'table.caption')),
             h('colgroup', null,
               h('col', { style: { width: '5%' } }),
-              h('col', { style: { width: view === 'trash' ? '11%' : '17%' } }),
-              h('col', { style: { width: view === 'trash' ? '6%' : '6%' } }),
-              h('col', { style: { width: '11%' } }),
-              view === 'trash' ? h('col', { style: { width: '11%' } }) : null,
-              h('col', { style: { width: '6%' } }),
-              h('col', { style: { width: view === 'trash' ? '12%' : '18%' } }),
-              h('col', { style: { width: view === 'trash' ? '14%' : '22%' } }),
-              h('col', { style: { width: view === 'trash' ? '24%' : '15%' } })),
+              h('col', { style: { width: view === 'trash' ? '21%' : '30%' } }),
+              h('col', { style: { width: view === 'trash' ? '8%' : '9%' } }),
+              h('col', { style: { width: view === 'trash' ? '12%' : '13%' } }),
+              view === 'trash' ? h('col', { style: { width: '12%' } }) : null,
+              h('col', { style: { width: view === 'trash' ? '7%' : '8%' } }),
+              h('col', { style: { width: '25%' } }),
+              h('col', { style: { width: '10%' } })),
             h('thead', null, h('tr', null,
               h('th', null, t('column.select')),
               h('th', null, t('column.title')),
@@ -1050,7 +1296,6 @@ window.__ModuleLoader__.load({
               view === 'trash' ? h('th', null, t('column.deleted')) : null,
               h('th', null, t('column.size')),
               h('th', null, t(view === 'trash' ? 'column.originalPath' : 'column.path')),
-              h('th', null, t('column.workspaceDetail')),
               h('th', { className: 'sm-actions-head' }, t('column.actions')))),
             h('tbody', null, rows))
 
@@ -1060,7 +1305,7 @@ window.__ModuleLoader__.load({
           h('div', { className: 'sm-heading' },
             h('h1', { className: 'sm-title' }, view === 'trash' ? t('trash.title') : t('title')),
             h('p', { className: 'sm-subtitle' }, view === 'trash' ? t('trash.subtitle') : t('subtitle')),
-            h('p', { className: 'sm-meta' }, view === 'trash' ? t('trash.count', { count: trashData.total }) : t('count', { count: sessionData.total }))),
+            h('p', { className: 'sm-meta' }, view === 'trash' ? t('trash.count', { count: filteredTotal }) : t('count', { count: filteredTotal }))),
           h('div', { className: 'sm-toolbar' },
             h('button', {
               type: 'button',
@@ -1088,6 +1333,58 @@ window.__ModuleLoader__.load({
           h('span', { className: 'sm-alert-text' }, `${t('error.title')}: ${error}`),
           h('button', { type: 'button', className: 'sm-btn', onClick: () => { void load() } }, t('action.retry'))) : null,
         notice !== null ? h('div', { className: 'sm-notice', role: 'status' }, notice) : null,
+        h('div', { className: 'sm-filters', role: 'search' },
+          h('div', { className: 'sm-search' },
+            h('span', { className: 'sm-search-icon', 'aria-hidden': true }, searchIcon()),
+            h('input', {
+              className: 'sm-search-input',
+              type: 'text',
+              value: titleQuery,
+              placeholder: t('search.placeholder'),
+              'aria-label': t('aria.searchTitle'),
+              list: 'sm-title-options',
+              autoComplete: 'off',
+              onChange: event => { setTitleQuery(event.target.value) },
+            }),
+            titleQuery !== ''
+              ? h('button', {
+                type: 'button',
+                className: 'sm-search-clear',
+                'aria-label': t('aria.clearTitle'),
+                onClick: () => { setTitleQuery('') },
+              }, '×')
+              : null,
+            h('datalist', { id: 'sm-title-options' },
+              suggestionTitles.map(title => h('option', { key: title, value: title })))),
+          h('div', { className: 'sm-status-filter', role: 'radiogroup', 'aria-label': t('filter.status') },
+            h('span', { className: 'sm-filter-label' }, t('filter.status')),
+            h('label', { className: 'sm-filter-option' },
+              h('input', {
+                type: 'radio',
+                name: 'sm-status-filter',
+                className: 'sm-radio',
+                checked: statusFilter === 'active',
+                onChange: () => { setStatusFilter('active') },
+              }),
+              t('filter.active')),
+            h('label', { className: 'sm-filter-option' },
+              h('input', {
+                type: 'radio',
+                name: 'sm-status-filter',
+                className: 'sm-radio',
+                checked: statusFilter === 'archived',
+                onChange: () => { setStatusFilter('archived') },
+              }),
+              t('filter.archived'))),
+          h('button', {
+            type: 'button',
+            className: 'sm-btn',
+            'aria-label': t('aria.clearFilters'),
+            onClick: () => {
+              setTitleQuery('')
+              setStatusFilter(null)
+            },
+          }, t('filter.clear'))),
         h('div', { className: 'sm-table-toolbar' },
           view === 'trash'
             ? h(React.Fragment, null,
